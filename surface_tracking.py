@@ -15,28 +15,38 @@ rr.Connect("localhost")
 PORT = '/dev/tty.usbmodem1421'
 BAUD_RATE = 9600
 
-# ser = serial.Serial(PORT, BAUD_RATE)
+ser = serial.Serial(PORT, BAUD_RATE)
+
+data = rr.GetAllVariables()
+bottomleft, topleft, bottomright, topright = cb.get_corners(data)
+offsetx, offsety = cb.get_offset(bottomleft)
+width, height = cb.get_sizes(bottomleft, topleft, bottomright, topright)
+width = int(round(width))
+height = int(round(height))
+
+ser.write("*{0},{1}".format(width, height))
 
 while True:
     try:
         data = rr.GetAllVariables()
-        offsetx, offsety = cb.get_offset(data)
-        print "offsetx: {0} offsety: {1}".format(offsetx, offsety)
-        cogx = data['COG_X'] - offsetx
-        cogy = data['COG_Y'] - offsety
+        cogx = float(data['COG_X']) - offsetx
+        cogy = float(data['COG_Y']) - offsety
         print "ping pong ball"
+        cogx = int(round(cogx))
+        cogy = int(round(cogy))
         print "({0}, {1})".format(cogx, cogy)
+        print "width: {0}, height: {1}".format(width, height)
         ser.write("-{0},{1},{2},{3}".format(200, 74, cogx, cogy))
         time.sleep(.1)
     except KeyboardInterrupt:
         print "all done"
-        break
+g        break
     except KeyError:
-        os.system('cls')
+        os.system('clear')
         ser.write("-{0},{1},{2},{3}".format(1000, 1000, cogx, cogy))
         print "can't see ball :("
+        os.system('clear')
         time.sleep(1)
-        os.system('cls')
         pass
 
 ser.close()
